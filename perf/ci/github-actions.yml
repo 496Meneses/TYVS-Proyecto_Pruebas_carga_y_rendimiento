@@ -32,12 +32,12 @@ jobs:
       - name: Iniciar aplicación en background
         working-directory: registraduria
         run: |
-          java -jar target/*.jar &
+          java -Xms256m -Xmx1g -jar target/*.jar &
           echo "Esperando que el puerto 8080 esté disponible..."
           for i in {1..30}; do
             if nc -z localhost 8080 2>/dev/null; then
               echo "✅ Puerto 8080 abierto (intento $i)"
-              sleep 2
+              sleep 3
               break
             fi
             echo "  intento $i/30..."
@@ -58,7 +58,8 @@ jobs:
           k6 run perf/scripts/register_person_k6.js \
             -o json=perf/results/ci-regression-persons.json \
             --env BASE_URL=http://localhost:8080 \
-            --env SCENARIO=regression
+            --env SCENARIO=regression \
+            --env SLEEP_MS=50
         continue-on-error: true
 
       - name: Regression – voters (20 VUs × 5 min)
@@ -66,7 +67,8 @@ jobs:
           k6 run perf/scripts/voter_k6.js \
             -o json=perf/results/ci-regression-voters.json \
             --env BASE_URL=http://localhost:8080 \
-            --env SCENARIO=regression
+            --env SCENARIO=regression \
+            --env SLEEP_MS=50
         continue-on-error: true
 
       - name: Verificar SLOs (quality gate)

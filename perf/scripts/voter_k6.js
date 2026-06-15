@@ -1,6 +1,6 @@
 
 import http from 'k6/http';
-import { check } from 'k6';
+import { check, sleep } from 'k6';
 import { SharedArray } from 'k6/data';
 import { Trend, Rate } from 'k6/metrics';
 
@@ -9,6 +9,7 @@ const BASE_URL   = __ENV.BASE_URL   || 'http://localhost:8080';
 const DATA_FILE  = __ENV.DATA_FILE  || '../data/voters.csv';
 const TIMEOUT_MS = Number(__ENV.TIMEOUT_MS || 2000);
 const SCENARIO   = (__ENV.SCENARIO || 'baseline').toLowerCase();
+const SLEEP_MS   = Number(__ENV.SLEEP_MS   || 0);
 
 // Custom metrics
 const registerDuration = new Trend('register_duration');
@@ -134,6 +135,8 @@ export default function () {
   });
 
   registerFailed.add(!ok);
+
+  if (SLEEP_MS > 0) sleep(SLEEP_MS / 1000.0);
 }
 
 function mapGender(code) {
