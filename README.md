@@ -7,6 +7,7 @@ Integrantes:
 - Andrés Meneses Ortega
 - David Hernando Monsalve
 - Sergio Cruz Triana
+- Hermes Patichoy Calpa
 
 
 # NOTA: Toda la documentación en la WIKI del repositorio

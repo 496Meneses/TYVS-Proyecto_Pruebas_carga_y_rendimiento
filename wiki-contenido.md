@@ -1,10 +1,5 @@
 # Wiki – Pruebas de Carga y Rendimiento: Registraduría Nacional
 
-> **Nota:** Este archivo es el contenido para la Wiki de GitHub del proyecto.  
-> Copiarlo página por página en `Settings → Wiki` del repositorio.
-
----
-
 ## 1. Introducción y Arquitectura del Sistema
 
 ### 1.1 Descripción del Sistema
