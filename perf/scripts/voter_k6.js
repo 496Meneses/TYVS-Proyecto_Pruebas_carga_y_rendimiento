@@ -6,7 +6,7 @@ import { Trend, Rate } from 'k6/metrics';
 
 // ======== Config ========
 const BASE_URL   = __ENV.BASE_URL   || 'http://localhost:8080';
-const DATA_FILE  = __ENV.DATA_FILE  || 'perf/data/voters.csv';
+const DATA_FILE  = __ENV.DATA_FILE  || '../data/voters.csv';
 const TIMEOUT_MS = Number(__ENV.TIMEOUT_MS || 2000);
 const SCENARIO   = (__ENV.SCENARIO || 'baseline').toLowerCase();
 

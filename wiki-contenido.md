@@ -205,31 +205,36 @@ duration: '5m'
 | Total peticiones | 10 566 577 | - | - |
 | Checks pasados | 21 133 154 / 21 133 154 | - | ✅ |
 
-### 4.2 Load Test (200 VUs, 14 min)
+### 4.2 Load Test (200 VUs, 14 min) — Ejecución real
+
+> Ejecutado con `-Xmx4g -Xms512m`. Sin think time (`SLEEP_MS=0`), H2 in-memory en loopback.
 
 | Métrica | Valor | SLO | Estado |
 |---------|-------|-----|--------|
-| Avg | 84.3 ms | - | - |
-| Mediana (p50) | 61.4 ms | - | - |
-| p90 | 198.3 ms | - | - |
-| p95 | **267.4 ms** | ≤300ms | ✅ |
-| p99 | **512.9 ms** | ≤800ms | ✅ |
-| Tasa error | **0.22%** | <1% | ✅ |
-| Throughput | 103.8 req/s | ≥100/s | ✅ |
-| Total peticiones | 186.752 | - | - |
+| Avg | **3.75 ms** | - | - |
+| p90 | 7.01 ms | - | - |
+| p95 | **8.50 ms** | ≤300ms | ✅ |
+| p99 | **14.04 ms** | ≤800ms | ✅ |
+| max | 586.77 ms *(GC pause puntual)* | - | - |
+| Tasa error | **0.002%** (573 / 27 538 639) | <1% | ✅ |
+| Throughput | **32 784 req/s** | ≥100/s | ✅ |
+| Total peticiones | 27 538 639 | - | - |
+| Checks pasados | 55 076 132 / 55 077 278 | - | ✅ |
 
-### 4.3 Stress Test (600 VUs, 10 min)
+### 4.3 Stress Test (600 VUs, 10 min) — Ejecución real
+
+> Ejecutado con `-Xmx4g -Xms512m`, H2 in-memory, loopback, sin think time.
 
 | Métrica | Valor | SLO | Estado |
 |---------|-------|-----|--------|
-| Avg | 387.4 ms | - | - |
-| Mediana (p50) | 291.9 ms | - | - |
-| p90 | 712.4 ms | - | - |
-| p95 | **1023.9 ms** | ≤300ms | ❌ |
-| p99 | **2318.4 ms** | ≤800ms | ❌ |
-| Tasa error | **3.73%** | <1% | ❌ |
-| Throughput | 121.7 req/s | ≥100/s | ✅ |
-| Total peticiones | 292.332 | - | - |
+| Avg | **7.37 ms** | - | - |
+| p90 | 14.67 ms | - | - |
+| p95 | **17.05 ms** | ≤300ms | ✅ |
+| p99 | **26.19 ms** | ≤800ms | ✅ |
+| max | 417.26 ms *(GC pause puntual)* | - | - |
+| Tasa error | **0.000%** | <1% | ✅ |
+| Throughput | **34 280 req/s** | ≥100/s | ✅ |
+| Total peticiones | 20 568 044 | - | - |
 
 ---
 
@@ -238,25 +243,26 @@ duration: '5m'
 ### 5.1 Evolución de latencia
 
 ```
-Escenario  │ Avg      │ p95      │ p99      │ Error%  │ RPS
-───────────┼──────────┼──────────┼──────────┼─────────┼──────────
-Baseline   │  0.40ms  │   1.5ms  │  <10ms   │  0.00%  │  35 221
-Load       │ pendiente ejecución real                  │ pendiente
-Stress     │ pendiente ejecución real                  │ pendiente
+Escenario  │ VUs │ Avg      │ p95      │ p99      │ Error%  │ RPS
+───────────┼─────┼──────────┼──────────┼──────────┼─────────┼──────────
+Baseline   │  20 │  0.40ms  │   1.5ms  │  <10ms   │  0.000% │  35 221
+Load       │ 200 │  3.75ms  │   8.5ms  │  14.0ms  │  0.002% │  32 784
+Stress     │ 600 │  7.37ms  │  17.1ms  │  26.2ms  │  0.000% │  34 280
 ```
 
-> Los resultados de Load y Stress serán reemplazados por datos reales tras la ejecución.
+> Todos los valores provienen de ejecuciones reales sobre H2 in-memory en loopback.
 
 ### 5.2 Degradación relativa al baseline
 
-| Métrica | Baseline→Load | Baseline→Stress |
-|---------|:-------------:|:---------------:|
-| Avg latencia | TBD (real) | TBD (real) |
-| p95 latencia | TBD (real) | TBD (real) |
-| Tasa de error | TBD (real) | TBD (real) |
-| Throughput | TBD (real) | TBD (real) |
+| Métrica | Baseline→Load (+10x VUs) | Baseline→Stress (+30x VUs) |
+|---------|:------------------------:|:--------------------------:|
+| Avg latencia | 0.40ms → 3.75ms (+837%) | 0.40ms → 7.37ms (+1743%) |
+| p95 latencia | 1.5ms → 8.5ms (+467%) | 1.5ms → 17.1ms (+1040%) |
+| p99 latencia | <10ms → 14.0ms | <10ms → 26.2ms |
+| Tasa de error | 0.000% → 0.002% | 0.000% → 0.000% |
+| Throughput | 35 221 → 32 784 req/s (−7%) | 35 221 → 34 280 req/s (−3%) |
 
-La degradación es **no lineal**: al añadir concurrencia sobre H2 in-memory y el pool HikariCP por defecto (10 conexiones), la contención de recursos provoca colas de espera que escalan cuadráticamente con el número de VUs.
+La latencia escala de forma sub-lineal: 30× más VUs generan solo ~18× más latencia promedio. El throughput se mantiene estable porque H2 in-memory con HikariCP serializa las escrituras, actuando como regulador natural. Todos los escenarios cumplen los SLOs definidos bajo las condiciones de prueba locales.
 
 ---
 
@@ -344,23 +350,24 @@ public RegisterResult registerVoter(Person p) { ... }
 
 ### 9.1 Principal aprendizaje
 
-El experimento demuestra que el rendimiento de este sistema **no está limitado por la lógica de negocio ni por la red**, sino por la configuración de infraestructura por defecto de Spring Boot, en especial el pool de conexiones (10). Los tests unitarios y de integración pasaban 100% con 1-2 hilos; solo bajo carga de 200+ VUs emergió la contención.
+El experimento reveló que el sistema bajo prueba, **en un entorno local con H2 in-memory**, supera todos los SLOs incluso a 600 VUs concurrentes. Sin embargo, se identificó un defecto crítico de infraestructura (PERF-04): la JVM sin tuning de heap colapsa bajo carga extrema por OutOfMemoryError al acumular millones de registros en H2. Este tipo de fallo **es invisible en pruebas funcionales** y solo emerge en pruebas de carga sostenida.
 
-Esto ilustra por qué las pruebas de rendimiento son **irreemplazables**: ningún test funcional puede revelar problemas de contención de recursos concurrentes.
+Lección clave: siempre especificar `-Xms` y `-Xmx` al desplegar aplicaciones Spring Boot en producción.
 
 ### 9.2 Métrica más sensible
 
-El **p95 de latencia** resultó ser la métrica de alerta más temprana: comenzó a degradarse (>300ms) a ~280 VUs, mientras la tasa de error se mantuvo <1% hasta ~350 VUs. El p95 es un indicador líder del colapso, mientras que la tasa de error es un indicador rezagado.
+El **p99 de latencia** fue la métrica que mostró la degradación más consistente entre escenarios: pasó de <10ms (baseline) a 14ms (load) y 26ms (stress). Aunque estos valores están lejos del SLO de 800ms, la tendencia de crecimiento es un indicador temprano de contención. En producción con PostgreSQL y latencia de red, el p99 escalaría de forma más pronunciada.
 
 ### 9.3 Limitaciones del entorno de prueba
 
-- **H2 en modo embebido** introduce un techo de throughput artificial (~80 req/s en escrituras) que no existiría en producción con PostgreSQL.
-- **JVM sin tuning** con G1GC default genera Full GC pauses que introducen varianza en el p99 no representativa de producción.
-- **Entorno local** (PC única) mezcla la carga de k6 con la de la aplicación, comprimiendo los recursos disponibles.
+- **H2 en modo embebido** con almacenamiento en heap: el sistema "falla" por OOM antes de fallar por latencia de BD. En producción con PostgreSQL en servidor separado, la BD sería el cuello de botella, no la memoria JVM.
+- **Red loopback** (localhost): latencias de <1ms que no son representativas de producción (típicamente 1-50ms de red).
+- **Sin think time** (`SLEEP_MS=0`): throughput artificial de 35k req/s por VU vs. ~10 req/s en uso real con usuarios humanos.
+- **Recursos compartidos**: k6 y la app compiten por CPU/RAM en la misma máquina, comprimiendo ambos rendimientos.
 
 ### 9.4 Conclusión
 
-El sistema Registraduría cumple los SLOs bajo carga normal (200 VUs). Su capacidad máxima antes de violar SLOs es ~280 VUs concurrentes. La mejora de mayor impacto y menor costo es ampliar el pool HikariCP a 50 conexiones, que según el análisis teórico llevaría el punto de quiebre por encima de 500 VUs sin cambios de código.
+El sistema Registraduría **cumple todos los SLOs** bajo las condiciones de prueba locales con hasta 600 VUs. El único defecto real identificado fue PERF-04 (OOM sin `-Xmx`), resuelto con `-Xmx4g`. En un entorno de producción real con PostgreSQL, red y múltiples instancias, los cuellos de botella proyectados serían el pool HikariCP (máx. 10 conexiones) y los GC pauses de la JVM bajo alta concurrencia, que justifican las propuestas de mejora documentadas.
 
 ---
 
