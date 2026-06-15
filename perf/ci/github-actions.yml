@@ -178,6 +178,25 @@ jobs:
             --env SLEEP_MS=50
         continue-on-error: true
 
+      - name: Reiniciar app antes de Load (H2 limpio)
+        working-directory: registraduria
+        run: |
+          pkill -f "target/.*\.jar" || true
+          sleep 3
+          java -Xms256m -Xmx1g -jar target/*.jar &
+          echo "Esperando que la app esté lista..."
+          for i in {1..30}; do
+            if curl -sf -X POST http://localhost:8080/register \
+               -H "Content-Type: application/json" \
+               -d '{"id":999999999,"name":"ci-health","age":30,"gender":"MALE","alive":true}' \
+               >/dev/null 2>&1; then
+              echo "✅ App lista (intento $i)"
+              break
+            fi
+            echo "  intento $i/30..."
+            sleep 3
+          done
+
       - name: Load (0→200 VUs, 14 min)
         run: |
           k6 run perf/scripts/register_person_k6.js \
