@@ -1,7 +1,3 @@
-
-# Nota: LEER WIKI DEL REPOSITORIO.
-
-
 # Proyecto Final – Pruebas de Carga y Rendimiento
 
 Este proyecto final tiene como propósito diseñar, ejecutar y analizar pruebas de rendimiento sobre un servicio REST desarrollado durante el curso.  

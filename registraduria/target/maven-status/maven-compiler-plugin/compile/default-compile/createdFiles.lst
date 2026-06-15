@@ -1,0 +1,11 @@
+edu\unisabana\tyvs\registry\domain\model\Gender.class
+edu\unisabana\tyvs\registry\delivery\rest\RegistryController.class
+edu\unisabana\tyvs\registry\infrastructure\persistence\RegistryRepository.class
+edu\unisabana\tyvs\registry\domain\model\rq\PersonDTO.class
+edu\unisabana\tyvs\registry\config\RegistryConfig.class
+edu\unisabana\tyvs\registry\domain\model\RegisterResult.class
+edu\unisabana\tyvs\registry\RegistryApplication.class
+edu\unisabana\tyvs\registry\infrastructure\persistence\RegistryRecord.class
+edu\unisabana\tyvs\registry\domain\model\Person.class
+edu\unisabana\tyvs\registry\application\port\out\RegistryRepositoryPort.class
+edu\unisabana\tyvs\registry\application\usecase\Registry.class

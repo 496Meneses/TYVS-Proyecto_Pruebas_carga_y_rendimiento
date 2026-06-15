@@ -143,15 +143,16 @@ export const options = buildOptions();
  * Generación de ID único
  * =========================
  */
-function buildUniqueId(baseId) {
-  return (baseId * 1000000) + (__VU * 10000) + __ITER;
+function buildUniqueId() {
+  // Cada VU recibe bloque de 100M IDs → 20 VUs × 100M = 2000M < Integer.MAX_VALUE
+  return (__VU * 100000000) + __ITER;
 }
 
 function nextPayload() {
   const p = persons[Math.floor(Math.random() * persons.length)];
   return JSON.stringify({
     name:   p.name,
-    id:     buildUniqueId(p.id),
+    id:     buildUniqueId(),
     age:    p.age,
     gender: p.gender,
     alive:  p.alive,

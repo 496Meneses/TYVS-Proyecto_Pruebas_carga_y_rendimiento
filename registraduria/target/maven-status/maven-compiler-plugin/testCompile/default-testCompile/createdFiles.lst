@@ -1,0 +1,5 @@
+edu\unisabana\tyvs\registry\delivery\rest\RegistryControllerIT$TestBeans.class
+edu\unisabana\tyvs\registry\application\usecase\RegistryTest.class
+edu\unisabana\tyvs\registry\AppTest.class
+edu\unisabana\tyvs\registry\delivery\rest\RegistryControllerIT.class
+edu\unisabana\tyvs\registry\application\usecase\RegistryWithMockTest.class
