@@ -144,8 +144,8 @@ export const options = buildOptions();
  * =========================
  */
 function buildUniqueId() {
-  // Cada VU recibe bloque de 100M IDs → 20 VUs × 100M = 2000M < Integer.MAX_VALUE
-  return (__VU * 100000000) + __ITER;
+  // 1M IDs por VU → soporta 600 VUs × 1M = 600M < Integer.MAX_VALUE (2.147B)
+  return ((__VU - 1) * 1000000) + (__ITER % 999999) + 1;
 }
 
 function nextPayload() {
