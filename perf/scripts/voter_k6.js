@@ -97,9 +97,9 @@ function pickOne(arr) {
   return arr[Math.floor(Math.random() * arr.length)];
 }
 
-function buildUniqueId(documentId) {
-  // Evita colisiones entre VUs: prefijo VU + iteración
-  return `${__VU}${String(__ITER).padStart(6, '0')}`;
+function buildUniqueId() {
+  // Base 200M para no colisionar con persons (rango 0-20M) en el mismo H2
+  return 200000000 + ((__VU - 1) * 1000000) + __ITER;
 }
 
 // ======== Test Function ========
@@ -110,7 +110,7 @@ export default function () {
   // (misma estructura que PersonDTO: name, id, age, gender, alive)
   const payload = JSON.stringify({
     name:   v.fullName,
-    id:     Number(buildUniqueId(v.documentId)),
+    id:     buildUniqueId(),
     age:    v.age,
     gender: mapGender(v.gender),
     alive:  true,
