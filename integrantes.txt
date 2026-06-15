@@ -1,7 +1,9 @@
 Proyecto Final – Pruebas de Carga y Rendimiento
 Curso: Testing y Validación de Software
 Maestría en Ingeniería de Software – Universidad de La Sabana
-2025-1
+2026-1
 
 Integrantes:
-- [Tu nombre completo]
+- Andrés Meneses Ortega
+- David Hernando Monsalve
+- Sergio Cruz Triana
