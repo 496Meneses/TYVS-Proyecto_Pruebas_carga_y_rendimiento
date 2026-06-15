@@ -33,11 +33,13 @@ jobs:
         working-directory: registraduria
         run: |
           java -Xms256m -Xmx1g -jar target/*.jar &
-          echo "Esperando que el puerto 8080 esté disponible..."
+          echo "Esperando que la app esté lista para recibir peticiones..."
           for i in {1..30}; do
-            if nc -z localhost 8080 2>/dev/null; then
-              echo "✅ Puerto 8080 abierto (intento $i)"
-              sleep 3
+            if curl -sf -X POST http://localhost:8080/register \
+               -H "Content-Type: application/json" \
+               -d '{"id":999999999,"name":"ci-health","age":30,"gender":"MALE","alive":true}' \
+               >/dev/null 2>&1; then
+              echo "✅ App lista (intento $i)"
               break
             fi
             echo "  intento $i/30..."
@@ -56,7 +58,6 @@ jobs:
       - name: Regression – persons (20 VUs × 5 min)
         run: |
           k6 run perf/scripts/register_person_k6.js \
-            -o json=perf/results/ci-regression-persons.json \
             --env BASE_URL=http://localhost:8080 \
             --env SCENARIO=regression \
             --env SLEEP_MS=50
@@ -65,7 +66,6 @@ jobs:
       - name: Regression – voters (20 VUs × 5 min)
         run: |
           k6 run perf/scripts/voter_k6.js \
-            -o json=perf/results/ci-regression-voters.json \
             --env BASE_URL=http://localhost:8080 \
             --env SCENARIO=regression \
             --env SLEEP_MS=50
@@ -75,7 +75,8 @@ jobs:
         run: |
           python3 - <<'PYEOF'
           import json, glob, sys
-          files = glob.glob('perf/results/ci-regression-*.json')
+          files = (glob.glob('perf/results/summary-regression.json') +
+                   glob.glob('perf/results/voter-summary-regression.json'))
           if not files:
               print("⚠️  No se encontraron archivos de resultados k6")
               sys.exit(0)
@@ -111,7 +112,8 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           python3 - <<'PYEOF'
           import json, glob, os
-          files = glob.glob('perf/results/ci-regression-*.json')
+          files = (glob.glob('perf/results/summary-regression.json') +
+                   glob.glob('perf/results/voter-summary-regression.json'))
           summary_path = os.environ.get('GITHUB_STEP_SUMMARY', '/dev/null')
           lines = ["| Archivo | p95 | p99 | Error% | SLO |", "|---------|----:|----:|-------:|-----|"]
           for f in files:
@@ -148,11 +150,16 @@ jobs:
         working-directory: registraduria
         run: |
           mvn clean package -DskipTests -q
-          java -jar target/*.jar &
+          java -Xms256m -Xmx1g -jar target/*.jar &
           for i in {1..30}; do
-            nc -z localhost 8080 2>/dev/null && break || sleep 3
+            if curl -sf -X POST http://localhost:8080/register \
+               -H "Content-Type: application/json" \
+               -d '{"id":999999999,"name":"ci-health","age":30,"gender":"MALE","alive":true}' \
+               >/dev/null 2>&1; then
+              echo "✅ App lista"; break
+            fi
+            sleep 3
           done
-          sleep 2
 
       - name: Instalar k6
         run: |
@@ -166,17 +173,17 @@ jobs:
       - name: Baseline (20 VUs × 5 min)
         run: |
           k6 run perf/scripts/register_person_k6.js \
-            -o json=perf/results/baseline.json \
             --env BASE_URL=http://localhost:8080 \
-            --env SCENARIO=baseline
+            --env SCENARIO=baseline \
+            --env SLEEP_MS=50
         continue-on-error: true
 
       - name: Load (0→200 VUs, 14 min)
         run: |
           k6 run perf/scripts/register_person_k6.js \
-            -o json=perf/results/load.json \
             --env BASE_URL=http://localhost:8080 \
-            --env SCENARIO=load
+            --env SCENARIO=load \
+            --env SLEEP_MS=50
         continue-on-error: true
 
       - uses: actions/upload-artifact@v4
