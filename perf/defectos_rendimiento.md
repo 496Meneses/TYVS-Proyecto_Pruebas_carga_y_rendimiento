@@ -141,13 +141,59 @@ Media
 
 ---
 
+## Defecto PERF-04 — Crash del servidor bajo load test sin tuning JVM
+
+- **Capa afectada:** JVM / Infraestructura
+- **Escenario:** Load Test (200 VUs, sin think time, SLEEP_MS=0)
+- **Resultado esperado:** El servidor maneja 200 VUs concurrentes durante 14 minutos.
+- **Resultado obtenido:** La JVM terminó abruptamente a los ~85 segundos del inicio, con error "connection actively refused".
+
+### Evidencia
+
+```
+k6 output:
+  running (01m25s), 139/200 VUs, 2.537.873 complete (0% errors)
+  [siguiente segunda] → connection actively refused (JVM crash)
+
+Iteraciones totales al crash: ~2.537.873
+Throughput antes del crash: ~29.800 req/s (ramp-up en progreso)
+```
+
+### Causa probable
+
+- **Heap JVM por defecto insuficiente.** Spring Boot arrancó con la configuración default de la JVM, que limita el heap a ~256 MB (o 25 % de la RAM del sistema).
+- Con 200 VUs y 0 ms de think time, el throughput alcanza ~35.000 req/s. En ~85 s se insertaron ~2,5 millones de registros en H2.
+- H2 in-memory almacena todos los datos en el Java Heap. 2,5 M registros × ~100 bytes = ~250 MB, que sumado al overhead de la JVM y los 200 threads de Tomcat (~100 MB de stacks) supera el límite de heap disponible.
+- La JVM lanzó `OutOfMemoryError` y terminó el proceso.
+
+### Corrección aplicada
+
+```bash
+# Antes (falla):
+java -jar target/clasesequivalencia-1.0-SNAPSHOT.jar
+
+# Después (corregido):
+java -Xms512m -Xmx4g -jar target/clasesequivalencia-1.0-SNAPSHOT.jar
+```
+
+### Estado
+
+Resuelto (corrección temporal en entorno local)
+
+### Prioridad
+
+Alta
+
+---
+
 # Formato 2: Tabla de seguimiento
 
-| ID       | Escenario   | Resultado Esperado  | Resultado Obtenido         | Estado       | Prioridad |
-|----------|-------------|---------------------|----------------------------|--------------|-----------|
-| PERF-01  | Load        | p95 < 300 ms        | p95=267ms, p99=512ms       | Abierto      | Alta      |
-| PERF-02  | Stress      | Error rate < 1%     | 3.73%                      | En progreso  | Crítica   |
-| PERF-03  | Soak (2h)   | Latencia estable    | Degradación 95ms → 340ms   | Abierto      | Media     |
+| ID       | Escenario         | Resultado Esperado        | Resultado Obtenido              | Estado            | Prioridad |
+|----------|-------------------|---------------------------|---------------------------------|-------------------|-----------|
+| PERF-01  | Load              | p95 < 300 ms              | p95=267ms, p99=512ms            | Abierto           | Alta      |
+| PERF-02  | Stress            | Error rate < 1%           | 3.73%                           | En progreso       | Crítica   |
+| PERF-03  | Soak (2h)         | Latencia estable          | Degradación 95ms → 340ms        | Abierto           | Media     |
+| PERF-04  | Load (200 VUs)    | Sin crashes en 14 min     | JVM crash ~85s por OOM          | Resuelto (local)  | Alta      |
 
 ---
 

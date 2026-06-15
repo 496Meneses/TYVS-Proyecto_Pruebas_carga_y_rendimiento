@@ -133,6 +133,7 @@ function buildOptions() {
     scenarios: { run: chosen || ALL_SCENARIOS['baseline'] },
     discardResponseBodies: false,
     noConnectionReuse: false,
+    summaryTrendStats: ['avg', 'min', 'med', 'max', 'p(90)', 'p(95)', 'p(99)'],
   };
 }
 

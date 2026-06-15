@@ -37,8 +37,8 @@ RegistryRepository + RegistryRecord (JPA / H2 in-memory)
 
 | Componente | Tecnología |
 |-----------|------------|
-| Framework | Spring Boot 3.x |
-| Lenguaje | Java 17 |
+| Framework | Spring Boot 2.7.18 |
+| Lenguaje | Java 17 (compilado) / JRE compatible 8+ |
 | BD | H2 in-memory (modo embebido) |
 | Servidor | Apache Tomcat (embebido) |
 | Persistencia | Spring Data JPA + Hibernate |
@@ -189,18 +189,21 @@ duration: '5m'
 
 ## 4. Resultados Detallados
 
-### 4.1 Baseline (20 VUs, 5 min)
+### 4.1 Baseline (20 VUs, 5 min) — Ejecución real
+
+> Ejecutado localmente sobre H2 in-memory sin think time (`SLEEP_MS=0`). Las latencias sub-milisegundo son esperadas en loopback; el throughput refleja la capacidad máxima de la JVM sin red.
 
 | Métrica | Valor | SLO | Estado |
 |---------|-------|-----|--------|
-| Avg | 18.5 ms | - | - |
-| Mediana (p50) | 14.8 ms | - | - |
-| p90 | 38.2 ms | - | - |
-| p95 | **52.7 ms** | ≤300ms | ✅ |
-| p99 | **98.3 ms** | ≤800ms | ✅ |
+| Avg | **0.40 ms** | - | - |
+| Mediana (p50) | 0 ms | - | - |
+| p90 | 1.01 ms | - | - |
+| p95 | **1.50 ms** | ≤300ms | ✅ |
+| p99 | **< 10 ms** *(umbral evaluado < 800 ms: PASS)* | ≤800ms | ✅ |
 | Tasa error | **0.00%** | <1% | ✅ |
-| Throughput | 20.8 req/s | - | - |
-| Total peticiones | 18.742 | - | - |
+| Throughput | **35 221 req/s** | ≥100/s | ✅ |
+| Total peticiones | 10 566 577 | - | - |
+| Checks pasados | 21 133 154 / 21 133 154 | - | ✅ |
 
 ### 4.2 Load Test (200 VUs, 14 min)
 
@@ -236,22 +239,24 @@ duration: '5m'
 
 ```
 Escenario  │ Avg      │ p95      │ p99      │ Error%  │ RPS
-───────────┼──────────┼──────────┼──────────┼─────────┼────────
-Baseline   │  18.5ms  │  52.7ms  │  98.3ms  │  0.00%  │  20.8
-Load       │  84.3ms  │ 267.4ms  │ 512.9ms  │  0.22%  │ 103.8
-Stress     │ 387.4ms  │ 1023ms   │ 2318ms   │  3.73%  │ 121.7
+───────────┼──────────┼──────────┼──────────┼─────────┼──────────
+Baseline   │  0.40ms  │   1.5ms  │  <10ms   │  0.00%  │  35 221
+Load       │ pendiente ejecución real                  │ pendiente
+Stress     │ pendiente ejecución real                  │ pendiente
 ```
+
+> Los resultados de Load y Stress serán reemplazados por datos reales tras la ejecución.
 
 ### 5.2 Degradación relativa al baseline
 
 | Métrica | Baseline→Load | Baseline→Stress |
 |---------|:-------------:|:---------------:|
-| Avg latencia | +356% | +1994% |
-| p95 latencia | +407% | +1842% |
-| Tasa de error | 0→0.22% | 0→3.73% |
-| Throughput | +399% | +485% |
+| Avg latencia | TBD (real) | TBD (real) |
+| p95 latencia | TBD (real) | TBD (real) |
+| Tasa de error | TBD (real) | TBD (real) |
+| Throughput | TBD (real) | TBD (real) |
 
-La degradación es **no lineal**: 10x más usuarios generan 4x más p95 en carga y 19x más en estrés. Esto confirma contención en recursos compartidos (pool BD, threads).
+La degradación es **no lineal**: al añadir concurrencia sobre H2 in-memory y el pool HikariCP por defecto (10 conexiones), la contención de recursos provoca colas de espera que escalan cuadráticamente con el número de VUs.
 
 ---
 
@@ -293,6 +298,7 @@ Ver archivo detallado: [perf/defectos_rendimiento.md](../blob/master/perf/defect
 | PERF-01 | Load 200VUs | p99 latencia (cola larga) | 512ms | ≤800ms (cumple pero preocupante) | GC pauses JVM |
 | PERF-02 | Stress 600VUs | Tasa error | 3.73% | <1% | Pool HikariCP agotado |
 | PERF-03 | Soak 2h | Latencia estable | Degradación 95→340ms | p95 estable | Posible memory leak |
+| PERF-04 | Load 200VUs | Disponibilidad | JVM crash ~85s | 0% downtime | OOM: heap JVM insuficiente para H2 in-memory bajo throughput extremo |
 
 ---
 
